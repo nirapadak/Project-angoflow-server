@@ -1,28 +1,33 @@
+const { readdirSync } = require('fs');
 const express = require('express');
-const { config } = require('dotenv');
 const app = express();
 
+const mongoose = require('mongoose');
+const cors = require('cors');
+const hpp = require('hpp');
+const helmet = require('helmet');
+const morgan = require('morgan');
 
+require('dotenv').config();
 
-app.use(express())
 app.use(express.json());
+app.use(cors());
+app.use(express.urlencoded({ extended: false }));
+app.use(morgan('dev'));
+app.use(helmet());
+app.use(hpp());
 
-const PORT = process.config.PORT || 3000;
-
-
-app.get('/', (req, res) => {
-  res.send("nirapadak");
-})
-
-app.get('/list', (req, res) => {
-  res.json({
-    "name": "nirapadk",
-    "age": 34
-  });
-})
+const port = process.env.PORT || 3000;
 
 
+readdirSync("./src/router").map(file => app.use('/api/v1', require(`./src/router/${file}`)));
 
-app.listen(PORT, () => {
-  console.log(`Server listening on http://localhost:3000`)
-})
+
+mongoose
+  .connect(process.env.DATABASE_URL)
+  .then(() => {
+    app.listen(port, function () {
+      console.log(`server listening on ${port}`);
+      console.log("server running Successfully");
+    })
+  }).catch(error => console.log(error));
